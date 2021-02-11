@@ -1,0 +1,25 @@
+neuron basic_neuron:
+
+  parameters:
+    kp real = 1
+    pos boolean = true
+    buffer_size real = 100 ms
+    base_rate real = 0
+  end
+
+  state:
+    in_rate real = 0
+    out_rate real = 0
+  end
+
+  input:
+    inh_spikes pA <- inhibitory spike
+    exc_spikes pA <- excitatory spike
+  end
+
+  update:
+  end
+
+  output: spike
+
+end
