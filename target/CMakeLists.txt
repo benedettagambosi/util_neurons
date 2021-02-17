@@ -42,7 +42,7 @@ set( MODULE_NAME ${SHORT_NAME} )
 set( MODULE_SOURCES
     util_neurons_module.h util_neurons_module.cpp
     
-      basic_neuron.cpp basic_neuron.h
+      tracking_neuron.cpp tracking_neuron.h
     
     )
 
