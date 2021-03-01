@@ -19,7 +19,7 @@
 *  You should have received a copy of the GNU General Public License
 *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 *
-*  2021-02-15 13:40:02.794586
+*  2021-03-01 11:52:50.622333
 */
 #ifndef TRACKING_NEURON
 #define TRACKING_NEURON
@@ -63,7 +63,6 @@
 
   Receives: Spike,  DataLoggingRequest
 */
-
 typedef std::vector < std::vector<double> > vector_f;
 
 class tracking_neuron : public nest::Archiving_Node{

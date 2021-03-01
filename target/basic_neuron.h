@@ -19,7 +19,7 @@
 *  You should have received a copy of the GNU General Public License
 *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 *
-*  2021-02-11 10:55:35.676535
+*  2021-03-01 11:52:50.555794
 */
 #ifndef BASIC_NEURON
 #define BASIC_NEURON

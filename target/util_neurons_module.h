@@ -19,7 +19,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
  *
- *  2021-02-15 13:40:02.858254
+ *  2021-03-01 11:52:50.662528
  */
 
 #ifndef UTIL_NEURONS_MODULE_H

@@ -18,7 +18,7 @@
 *  You should have received a copy of the GNU General Public License
 *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 *
-*  2021-02-15 13:40:02.831153
+*  2021-03-01 11:52:50.645009
 */
 
 // C++ includes:
@@ -178,7 +178,7 @@ void tracking_neuron::update(nest::Time const & origin,const long from, const lo
     tmp = 0;
   }
 
-  S_.out_rate = P_.kp * abs(tmp);
+  S_.out_rate = P_.base_rate + P_.kp * abs(tmp);
 
   // TODO: I probably need to scale the signal to make sure neuron does not saturate
   V_.poisson_dev_.set_lambda( S_.out_rate * time_res * 1e-3 );

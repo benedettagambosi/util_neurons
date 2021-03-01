@@ -19,7 +19,7 @@
 *  You should have received a copy of the GNU General Public License
 *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 *
-*  2021-02-15 13:40:02.858254
+*  2021-03-01 11:52:50.662528
 */
 
 // Includes from nestkernel:
@@ -43,6 +43,8 @@
 // include headers with your own stuff
 #include "util_neurons_module.h"
 
+
+#include "basic_neuron.h"
 
 #include "tracking_neuron.h"
 
@@ -105,6 +107,8 @@ util_neurons_module::commandstring( void ) const
 void
 util_neurons_module::init( SLIInterpreter* i )
 {
+  
+    nest::kernel().model_manager.register_node_model<basic_neuron>("basic_neuron");
   
     nest::kernel().model_manager.register_node_model<tracking_neuron>("tracking_neuron");
   

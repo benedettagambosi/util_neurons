@@ -18,7 +18,7 @@
 *  You should have received a copy of the GNU General Public License
 *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 *
-*  2021-02-11 10:55:35.711715
+*  2021-03-01 11:52:50.594481
 */
 
 // C++ includes:
@@ -174,7 +174,7 @@ void basic_neuron::update(nest::Time const & origin,const long from, const long 
   // negative weights in inhibitory synapses, and negative neurons - i.e. P_pos
   // is false).
   S_.in_rate = 1000.0 * abs(spike_count_in) / P_.buffer_size ;
-  S_.out_rate = P_.kp * S_.in_rate;
+  S_.out_rate = P_.base_rate + P_.kp * S_.in_rate;
 
   // Set Poisson lambda respective time resolution
   V_.poisson_dev_.set_lambda( S_.out_rate * time_res * 1e-3 );
