@@ -1,6 +1,6 @@
 
 /*
-*  basic_neuron.h
+*  tracking_neuron.h
 *
 *  This file is part of NEST.
 *
@@ -19,10 +19,10 @@
 *  You should have received a copy of the GNU General Public License
 *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 *
-*  2021-03-01 11:52:50.555794
+*  2021-03-01 11:52:50.622333
 */
-#ifndef BASIC_NEURON
-#define BASIC_NEURON
+#ifndef TRACKING_NEURON
+#define TRACKING_NEURON
 
 #include "config.h"
 
@@ -42,7 +42,7 @@
 #include "dictdatum.h"
 
 /* BeginDocumentation
-  Name: basic_neuron.
+  Name: tracking_neuron.
 
   Description:
 
@@ -63,12 +63,14 @@
 
   Receives: Spike,  DataLoggingRequest
 */
-class basic_neuron : public nest::Archiving_Node{
+typedef std::vector < std::vector<double> > vector_f;
+
+class tracking_neuron : public nest::Archiving_Node{
 public:
   /**
   * The constructor is only used to create the model prototype in the model manager.
   */
-  basic_neuron();
+  tracking_neuron();
 
   /**
   * The copy constructor is used to create model copies and instances of the model.
@@ -76,12 +78,12 @@ public:
   *       Initialization of buffers and interal variables is deferred to
   *       @c init_buffers_() and @c calibrate().
   */
-  basic_neuron(const basic_neuron &);
+  tracking_neuron(const tracking_neuron &);
 
   /**
   * Releases resources.
   */
-  ~basic_neuron();
+  ~tracking_neuron();
 
   /**
    * Import sets of overloaded virtual functions.
@@ -129,8 +131,8 @@ private:
   void update(nest::Time const &, const long, const long);
 
   // The next two classes need to be friends to access the State_ class/member
-  friend class nest::RecordablesMap<basic_neuron>;
-  friend class nest::UniversalDataLogger<basic_neuron>;
+  friend class nest::RecordablesMap<tracking_neuron>;
+  friend class nest::UniversalDataLogger<tracking_neuron>;
 
   /**
   * Free parameters of the neuron.
@@ -158,6 +160,8 @@ private:
     bool pos;
     double buffer_size;
     double base_rate;
+    //double pattern;
+    std::string pattern_file;
 
     /** Initialize parameters to their default values. */
     Parameters_();
@@ -184,10 +188,7 @@ private:
   *         assignment operator to copy those members.
   */
   struct State_{
-
-
     double in_rate;
-
     double out_rate;
         State_();
   };
@@ -205,6 +206,8 @@ private:
   */
   struct Variables_ {
     librandom::PoissonRandomDev poisson_dev_; //!< Random deviate generator
+    std::vector<double> pattern;
+    int trial_length;
   };
 
   /**
@@ -218,11 +221,11 @@ private:
     *       cannot destroy themselves, Buffers_ will need a destructor.
     */
   struct Buffers_ {
-    Buffers_(basic_neuron &);
-    Buffers_(const Buffers_ &, basic_neuron &);
+    Buffers_(tracking_neuron &);
+    Buffers_(const Buffers_ &, tracking_neuron &);
 
     /** Logger for all analog data */
-    nest::UniversalDataLogger<basic_neuron> logger_;
+    nest::UniversalDataLogger<tracking_neuron> logger_;
 
     inline nest::RingBuffer& get_inh_spikes() {return inh_spikes;}
     //!< Buffer incoming pAs through delay, as sum
@@ -234,7 +237,7 @@ private:
     nest::RingBuffer exc_spikes;
     double exc_spikes_grid_sum_;
 
-    std::map<long, double> in_spikes_;
+    std::vector <std::vector<double> > traj_;
 
     };
   inline double get_in_rate() const {
@@ -279,6 +282,15 @@ private:
     P_.base_rate = __v;
   }
 
+  //inline double get_pattern() const {
+  inline std::string get_pattern_file() const {
+    return P_.pattern_file;
+  }
+  //inline void set_pattern(const double __v) {
+  inline void set_pattern_file(const std::string __v) {
+    P_.pattern_file = __v;
+  }
+
 
 
   inline nest::RingBuffer& get_inh_spikes() {return B_.get_inh_spikes();};
@@ -304,14 +316,14 @@ private:
   Buffers_    B_;  //!< Buffers.
 
   //! Mapping of recordables names to access functions
-  static nest::RecordablesMap<basic_neuron> recordablesMap_;
+  static nest::RecordablesMap<tracking_neuron> recordablesMap_;
 
 
 
 /** @} */
-}; /* neuron basic_neuron */
+}; /* neuron tracking_neuron */
 
-inline nest::port basic_neuron::send_test_event(
+inline nest::port tracking_neuron::send_test_event(
     nest::Node& target, nest::rport receptor_type, nest::synindex, bool){
   // You should usually not change the code in this function.
   // It confirms that the target of connection @c c accepts @c nest::SpikeEvent on
@@ -321,7 +333,7 @@ inline nest::port basic_neuron::send_test_event(
   return target.handles_test_event(e, receptor_type);
 }
 
-inline nest::port basic_neuron::handles_test_event(nest::SpikeEvent&, nest::port receptor_type){
+inline nest::port tracking_neuron::handles_test_event(nest::SpikeEvent&, nest::port receptor_type){
 
     // You should usually not change the code in this function.
     // It confirms to the connection management system that we are able
@@ -334,7 +346,7 @@ inline nest::port basic_neuron::handles_test_event(nest::SpikeEvent&, nest::port
 
 
 
-inline nest::port basic_neuron::handles_test_event(
+inline nest::port tracking_neuron::handles_test_event(
     nest::DataLoggingRequest& dlr, nest::port receptor_type){
   // You should usually not change the code in this function.
   // It confirms to the connection management system that we are able
@@ -348,7 +360,7 @@ inline nest::port basic_neuron::handles_test_event(
 }
 
 // TODO call get_status on used or internal components
-inline void basic_neuron::get_status(DictionaryDatum &__d) const{
+inline void tracking_neuron::get_status(DictionaryDatum &__d) const{
   def<double>(__d, "kp", get_kp());
 
   def<bool>(__d, "pos", get_pos());
@@ -356,6 +368,10 @@ inline void basic_neuron::get_status(DictionaryDatum &__d) const{
   def<double>(__d, "buffer_size", get_buffer_size());
 
   def<double>(__d, "base_rate", get_base_rate());
+
+  //def<double>(__d, "pattern", get_pattern());
+  //def<vector_f>(__d, "pattern", get_pattern());
+  def<std::string>(__d, "pattern_file", get_pattern_file());
 
   def<double>(__d, "in_rate", get_in_rate());
 
@@ -369,7 +385,7 @@ inline void basic_neuron::get_status(DictionaryDatum &__d) const{
 
 }
 
-inline void basic_neuron::set_status(const DictionaryDatum &__d){
+inline void tracking_neuron::set_status(const DictionaryDatum &__d){
 
   double tmp_kp = get_kp();
   updateValue<double>(__d, "kp", tmp_kp);
@@ -385,6 +401,12 @@ inline void basic_neuron::set_status(const DictionaryDatum &__d){
 
   double tmp_base_rate = get_base_rate();
   updateValue<double>(__d, "base_rate", tmp_base_rate);
+
+
+  //double tmp_pattern = get_pattern();
+  //updateValue<double>(__d, "pattern", tmp_pattern);
+  std::string tmp_pattern_file = get_pattern_file();
+  updateValue<std::string>(__d, "pattern_file", tmp_pattern_file);
 
 
   double tmp_in_rate = get_in_rate();
@@ -420,6 +442,10 @@ inline void basic_neuron::set_status(const DictionaryDatum &__d){
 
 
 
+  set_pattern_file(tmp_pattern_file);
+
+
+
   set_in_rate(tmp_in_rate);
 
 
@@ -430,4 +456,4 @@ inline void basic_neuron::set_status(const DictionaryDatum &__d){
 
 };
 
-#endif /* #ifndef BASIC_NEURON */
+#endif /* #ifndef TRACKING_NEURON */

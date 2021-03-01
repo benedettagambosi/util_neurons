@@ -1,5 +1,5 @@
 /*
-*  basic_neuron.cpp
+*  tracking_neuron.cpp
 *
 *  This file is part of NEST.
 *
@@ -18,11 +18,13 @@
 *  You should have received a copy of the GNU General Public License
 *  along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 *
-*  2021-03-01 11:52:50.594481
+*  2021-03-01 11:52:50.645009
 */
 
 // C++ includes:
 #include <limits>
+#include <iostream>
+#include <fstream>
 
 // Includes from libnestutil:
 #include "numerics.h"
@@ -39,47 +41,47 @@
 #include "integerdatum.h"
 #include "lockptrdatum.h"
 
-#include "basic_neuron.h"
+#include "tracking_neuron.h"
 
 
 /* ----------------------------------------------------------------
 * Recordables map
 * ---------------------------------------------------------------- */
-nest::RecordablesMap<basic_neuron> basic_neuron::recordablesMap_;
+nest::RecordablesMap<tracking_neuron> tracking_neuron::recordablesMap_;
 
 namespace nest
 {
   // Override the create() method with one call to RecordablesMap::insert_()
   // for each quantity to be recorded.
-  template <> void RecordablesMap<basic_neuron>::create(){
+  template <> void RecordablesMap<tracking_neuron>::create(){
   // use standard names whereever you can for consistency!
 
-  insert_("in_rate", &basic_neuron::get_in_rate);
+  insert_("in_rate", &tracking_neuron::get_in_rate);
 
-  insert_("out_rate", &basic_neuron::get_out_rate);
+  insert_("out_rate", &tracking_neuron::get_out_rate);
   }
 }
 
 /* ----------------------------------------------------------------
  * Default constructors defining default parameters and state
  * Note: the implementation is empty. The initialization is of variables
- * is a part of the basic_neuron's constructor.
+ * is a part of the tracking_neuron's constructor.
  * ---------------------------------------------------------------- */
-basic_neuron::Parameters_::Parameters_(){}
+tracking_neuron::Parameters_::Parameters_(){}
 
-basic_neuron::State_::State_(){}
+tracking_neuron::State_::State_(){}
 
 /* ----------------------------------------------------------------
 * Parameter and state extractions and manipulation functions
 * ---------------------------------------------------------------- */
 
-basic_neuron::Buffers_::Buffers_(basic_neuron &n):
+tracking_neuron::Buffers_::Buffers_(tracking_neuron &n):
   logger_(n){
   // Initialization of the remaining members is deferred to
   // init_buffers_().
 }
 
-basic_neuron::Buffers_::Buffers_(const Buffers_ &, basic_neuron &n):
+tracking_neuron::Buffers_::Buffers_(const Buffers_ &, tracking_neuron &n):
   logger_(n){
   // Initialization of the remaining members is deferred to
   // init_buffers_().
@@ -88,7 +90,7 @@ basic_neuron::Buffers_::Buffers_(const Buffers_ &, basic_neuron &n):
 /* ----------------------------------------------------------------
  * Default and copy constructor for node, and destructor
  * ---------------------------------------------------------------- */
-basic_neuron::basic_neuron():Archiving_Node(), P_(), S_(), B_(*this)
+tracking_neuron::tracking_neuron():Archiving_Node(), P_(), S_(), B_(*this)
 {
   recordablesMap_.create();
 
@@ -96,47 +98,57 @@ basic_neuron::basic_neuron():Archiving_Node(), P_(), S_(), B_(*this)
   P_.pos = true; // as boolean
   P_.buffer_size = 100*1.0; // as real
   P_.base_rate = 0; // as real
+  //P_.pattern = 0; // as real
   S_.in_rate = 0; // as real
   S_.out_rate = 0; // as real
 }
 
-basic_neuron::basic_neuron(const basic_neuron& __n):
+tracking_neuron::tracking_neuron(const tracking_neuron& __n):
   Archiving_Node(), P_(__n.P_), S_(__n.S_), B_(__n.B_, *this){
   P_.kp = __n.P_.kp;
   P_.pos = __n.P_.pos;
   P_.buffer_size = __n.P_.buffer_size;
   P_.base_rate = __n.P_.base_rate;
+  P_.pattern_file = __n.P_.pattern_file;
 
   S_.in_rate = __n.S_.in_rate;
   S_.out_rate = __n.S_.out_rate;
-
 }
 
-basic_neuron::~basic_neuron(){
+tracking_neuron::~tracking_neuron(){
 }
 
 /* ----------------------------------------------------------------
 * Node initialization functions
 * ---------------------------------------------------------------- */
 
-void basic_neuron::init_state_(const Node& proto){
-  const basic_neuron& pr = downcast<basic_neuron>(proto);
+void tracking_neuron::init_state_(const Node& proto){
+  const tracking_neuron& pr = downcast<tracking_neuron>(proto);
   S_ = pr.S_;
 }
 
 
 
-void basic_neuron::init_buffers_(){
+void tracking_neuron::init_buffers_(){
 
   get_inh_spikes().clear(); //includes resize
   get_exc_spikes().clear(); //includes resize
+
+  std::ifstream pattern_file_pt(P_.pattern_file);
+
+  double tmp=0;
+  while(pattern_file_pt >> tmp) {
+    V_.pattern.push_back(tmp);
+    V_.trial_length++;
+  }
+
 
   B_.logger_.reset(); // includes resize
   Archiving_Node::clear_history();
 
 }
 
-void basic_neuron::calibrate(){
+void tracking_neuron::calibrate(){
   B_.logger_.init();
 }
 
@@ -147,41 +159,31 @@ void basic_neuron::calibrate(){
 /*
  *
  */
-void basic_neuron::update(nest::Time const & origin,const long from, const long to){
+void tracking_neuron::update(nest::Time const & origin,const long from, const long to){
 
   librandom::RngPtr rng = nest::kernel().rng_manager.get_rng( get_thread() );
 
   long tick = origin.get_steps();
   double time_res = nest::Time::get_resolution().get_ms();
 
-  long buf_sz = std::lrint(P_.buffer_size / time_res);
-  double spike_count_in = 0;
+  double tmp = 0;
   long spike_count_out = 0;
 
-  for ( long i = 0; i < buf_sz; i++ ){
-    if ( B_.in_spikes_.count(tick - i) ){
-      spike_count_in += B_.in_spikes_[tick - i];
-    }
-  }
+  // Get signal at the current time stamp
+  //tmp = V_.pattern[ (int)(tick * time_res) % V_.trial_length ];
+  tmp = V_.pattern[ tick ];
 
   // Check if neuron is sensitive to positive or negative signals
-  if ( (spike_count_in<0 && P_.pos) || (spike_count_in>0 && !P_.pos) ){
-    spike_count_in = 0;
+  if ( (tmp<0 && P_.pos) || (tmp>=0 && !P_.pos) ){
+    tmp = 0;
   }
 
-  // Multiply by 1000 to translate rate in Hz (buffer size is in milliseconds)
-  // Absolute value because spike_count_in could be a negative value (due to
-  // negative weights in inhibitory synapses, and negative neurons - i.e. P_pos
-  // is false).
-  S_.in_rate = 1000.0 * abs(spike_count_in) / P_.buffer_size ;
-  S_.out_rate = P_.base_rate + P_.kp * S_.in_rate;
+  S_.out_rate = P_.base_rate + P_.kp * abs(tmp);
 
-  // Set Poisson lambda respective time resolution
+  // TODO: I probably need to scale the signal to make sure neuron does not saturate
   V_.poisson_dev_.set_lambda( S_.out_rate * time_res * 1e-3 );
 
   for ( long lag = from ; lag < to ; ++lag ) {
-    //B_.inh_spikes_grid_sum_ = get_inh_spikes().get_value(lag);
-    //B_.exc_spikes_grid_sum_ = get_exc_spikes().get_value(lag);
 
     // Number of output spikes based (i.e. draw from Poisson distribution)
     spike_count_out = V_.poisson_dev_.ldev( rng );
@@ -194,37 +196,33 @@ void basic_neuron::update(nest::Time const & origin,const long from, const long 
     }
 
     // voltage logging
-    B_.logger_.record_data(tick+lag);
+    B_.logger_.record_data(origin.get_steps()+lag);
   }
+
 }
 
 // Do not move this function as inline to h-file. It depends on
 // universal_data_logger_impl.h being included here.
-void basic_neuron::handle(nest::DataLoggingRequest& e){
+void tracking_neuron::handle(nest::DataLoggingRequest& e){
   B_.logger_.handle(e);
 }
 
 
-void basic_neuron::handle(nest::SpikeEvent &e){
+void tracking_neuron::handle(nest::SpikeEvent &e){
   assert(e.get_delay_steps() > 0);
 
-  long origin_step       = nest::kernel().simulation_manager.get_slice_origin().get_steps();
-  long delivery_step_rel = e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin() );
-  long tick              = origin_step + delivery_step_rel;
-
-  const double weight       = e.get_weight();
+  const double weight = e.get_weight();
   const double multiplicity = e.get_multiplicity();
 
-  double map_value = 0.0;
-  if ( B_.in_spikes_.count(tick) ){
-    map_value = B_.in_spikes_[tick];
-  }
-  B_.in_spikes_[tick] = map_value + weight * multiplicity;
-
   if ( weight < 0.0 ){ // inhibitory
-    get_inh_spikes().add_value(delivery_step_rel, weight * multiplicity );
+    get_inh_spikes().
+        add_value(e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin()),
+
+                       weight * multiplicity );
   }
   if ( weight >= 0.0 ){ // excitatory
-    get_exc_spikes().add_value(delivery_step_rel, weight * multiplicity );
+    get_exc_spikes().
+        add_value(e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin()),
+                       weight * multiplicity );
   }
 }

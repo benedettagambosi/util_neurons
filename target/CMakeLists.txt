@@ -44,6 +44,8 @@ set( MODULE_SOURCES
     
       basic_neuron.cpp basic_neuron.h
     
+      tracking_neuron.cpp tracking_neuron.h
+    
     )
 
 # 3) We require a header name like this:
