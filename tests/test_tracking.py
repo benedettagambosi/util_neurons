@@ -26,7 +26,7 @@ buf_size  = 200.0
 
 # Neurons
 Nt = 50 # number
-bas_rate_track = 0.0 #baseline
+bas_rate_track = 30.0 #baseline
 
 # Task definition
 pos_init = -20.0
