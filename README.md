@@ -27,7 +27,7 @@ cd $HOME/util_neurons/target
 ```
 4. Recompile nest with the additional module "util_neurons"
 ```
-cmake -Dwith-nest=/home/xis/HBP/nest-2.18.0/bin/nest-config .
+cmake -Dwith-nest=$NEST_INSTALL_DIR/bin/nest-config .
 make all
 make install
 ```
