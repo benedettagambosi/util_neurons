@@ -1,6 +1,9 @@
 # util_neurons
 General purpose neurons
 
+Tested with:
+*branch main*: Ubuntu 18.04.5 LTS, Python 3.8.6 and NEST Release 2.18.0
+
 ### Installation instructions
 
 0. Install NEST following the instructions provided here (http://www.nest-simulator.org/)
