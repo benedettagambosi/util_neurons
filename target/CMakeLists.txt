@@ -41,11 +41,13 @@ set( MODULE_NAME ${SHORT_NAME} )
 # 2) Add all your sources here
 set( MODULE_SOURCES
     util_neurons_module.h util_neurons_module.cpp
-    
+
       basic_neuron.cpp basic_neuron.h
-    
+
       tracking_neuron.cpp tracking_neuron.h
-    
+
+      diff_neuron.cpp diff_neuron.h
+
     )
 
 # 3) We require a header name like this:

@@ -21,26 +21,28 @@ def desiredTrajectory(x_init, x_des, T_max, timespan):
     #pol = np.array([a,b,c,d,e,g])
     return pp
 
-time_span = 5000.0
+time_span = 1000.0
 time_vect = np.arange(0, time_span)
-buf_size  = 500.0
+buf_size  = 10.0
 
-Ns = 20 # Number of Poisson neurons (source)
-Nm = 20 # Number of Motor cortex neurons (destination)
+Ns = 1 # Number of Poisson neurons (source)
+Nm = 1 # Number of Motor cortex neurons (destination)
 
 # Base rates
-bas_rate_motor   = 5.0;
-bas_rate_planner = 5.0;
-bas_rate_state   = 5.0;
+bas_rate_motor   = 0.0;
+bas_rate_planner = 500.0;
+bas_rate_state   = 500.0;
 
 # Gain
-gain_plan  = 15
-gain_stEst = 15
+gain_plan  = 50.0
+gain_stEst = 50.0
+
 
 # Create trajectories
-trj_des  = desiredTrajectory(0.0, 10.0, time_span, time_vect)
-trj_err  = -2*np.sin(2*np.pi*(1/time_span)*time_vect)
-trj_real = trj_des + trj_err
+trj_des  = desiredTrajectory(0.5, 0.5, time_span, time_vect)
+#trj_err  = -5*np.sin(2*np.pi*(1/time_span)*time_vect)
+#trj_real = trj_des + trj_err
+trj_real = trj_des
 
 ########## Convert desired and real trajectories into spike trains ##########
 
@@ -77,25 +79,25 @@ nest.Connect(stEst_n,stEst_n_prt, "one_to_one")
 
 ############################## Motor cortex ################################
 mc_p = nest.Create("basic_neuron", Nm)
-nest.SetStatus(mc_p, {"kp": 1.0, "pos": True, "buffer_size":buf_size, "base_rate": bas_rate_motor})
+nest.SetStatus(mc_p, {"kp": 10.0, "pos": True, "buffer_size":buf_size, "base_rate": bas_rate_motor})
 
 mc_n = nest.Create("basic_neuron", Nm)
-nest.SetStatus(mc_n, {"kp": 1.0, "pos": False, "buffer_size":buf_size, "base_rate": bas_rate_motor})
+nest.SetStatus(mc_n, {"kp": 10.0, "pos": False, "buffer_size":buf_size, "base_rate": bas_rate_motor})
 
 syn_exc = {"weight": 1.0}  # Synaptic weight of the excitatory synapse
 syn_inh = {"weight": -1.0} # Synaptic weight of the inhibitory synapse
 
 # Connections to motor cortex positive neurons (sensitive to positive signals)
 nest.Connect(plan_p_prt, mc_p, "one_to_one", syn_spec=syn_exc)  # Output of the planner...
-nest.Connect(plan_n_prt, mc_p, "one_to_one", syn_spec=syn_inh)
+#nest.Connect(plan_n_prt, mc_p, "one_to_one", syn_spec=syn_inh)
 nest.Connect(stEst_p_prt, mc_p, "one_to_one", syn_spec=syn_inh) #... minus output of state estimator
-nest.Connect(stEst_n_prt, mc_p, "one_to_one", syn_spec=syn_exc)
+#nest.Connect(stEst_n_prt, mc_p, "one_to_one", syn_spec=syn_exc)
 
 # Connections to motor cortex positive neurons (sensitive to negative signals)
 nest.Connect(plan_p_prt, mc_n, "one_to_one", syn_spec=syn_exc)
-nest.Connect(plan_n_prt, mc_n, "one_to_one", syn_spec=syn_inh)
+#nest.Connect(plan_n_prt, mc_n, "one_to_one", syn_spec=syn_inh)
 nest.Connect(stEst_p_prt, mc_n, "one_to_one", syn_spec=syn_inh) #... minus output of state estimator
-nest.Connect(stEst_n_prt, mc_n, "one_to_one", syn_spec=syn_exc)
+#nest.Connect(stEst_n_prt, mc_n, "one_to_one", syn_spec=syn_exc)
 
 
 ########################### DEVICES ###########################
@@ -144,7 +146,7 @@ SD_mc_n    = nest.GetStatus(spikedet_mc_n,keys="events")[0]
 SD_mc_n_ev = SD_mc_n["senders"]
 SD_mc_n_tm = SD_mc_n["times"]
 
-buf = 100
+buf = 10
 count_n, bins = np.histogram( SD_mc_n_tm, bins=np.arange(0, time_span+1, buf) )
 count_p, bins = np.histogram( SD_mc_p_tm, bins=np.arange(0, time_span+1, buf) )
 rate_n = 1000*count_n/(Nm*buf)
@@ -175,7 +177,7 @@ fig, axs = plt.subplots(3, 1, sharex='col')
 ax1, ax2, ax3 = axs
 ax1.plot(time_vect,trj_des)
 ax1.set_ylabel('desired')
-ax2.plot(time_vect,trj_err)
+#ax2.plot(time_vect,trj_err)
 ax2.set_ylabel('error')
 ax3.plot(time_vect,trj_des)
 ax3.plot(time_vect,trj_real)
@@ -201,8 +203,8 @@ axs[1,1].plot(SD_stEst_n_tm, SD_stEst_n_ev,'|')
 fig, axs = plt.subplots(5, 1, sharex='col')
 axs[0].plot(time_vect,trj_des)
 axs[0].plot(time_vect,trj_real)
-axs[1].plot(SD_mc_p_tm, SD_mc_p_ev,'|')
-axs[2].plot(SD_mc_n_tm, SD_mc_n_ev,'|')
+axs[1].scatter(SD_mc_p_tm, SD_mc_p_ev,marker='.', s=1)
+axs[2].scatter(SD_mc_n_tm, SD_mc_n_ev,marker='.', s=1)
 axs[3].bar(bins[:-1], rate_n, width=bins[1] - bins[0],color='b')
 axs[3].plot(bins[:-1],rate_sm_n,color='k')
 axs[4].bar(bins[:-1], rate_p, width=bins[1] - bins[0],color='r')

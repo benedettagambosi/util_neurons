@@ -22,11 +22,11 @@ def desiredTrajectory(x_init, x_des, T_max, timespan):
 # Timing
 time_span = 1000.0
 time_vect = np.arange(0, time_span, res)
-buf_size  = 200.0
+#buf_size  = 1.0
 
 # Neurons
 Nt = 50 # number
-bas_rate_track = 30.0 #baseline
+bas_rate_track = 0.0 #baseline
 
 # Task definition
 pos_init = -20.0

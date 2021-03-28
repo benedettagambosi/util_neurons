@@ -43,6 +43,7 @@
 // include headers with your own stuff
 #include "util_neurons_module.h"
 
+#include "diff_neuron.h"
 
 #include "basic_neuron.h"
 
@@ -107,9 +108,11 @@ util_neurons_module::commandstring( void ) const
 void
 util_neurons_module::init( SLIInterpreter* i )
 {
-  
+
+    nest::kernel().model_manager.register_node_model<diff_neuron>("diff_neuron");
+
     nest::kernel().model_manager.register_node_model<basic_neuron>("basic_neuron");
-  
+
     nest::kernel().model_manager.register_node_model<tracking_neuron>("tracking_neuron");
-  
+
 } // util_neurons_module::init()
