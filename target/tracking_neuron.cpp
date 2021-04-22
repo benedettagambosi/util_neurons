@@ -170,8 +170,13 @@ void tracking_neuron::update(nest::Time const & origin,const long from, const lo
   long spike_count_out = 0;
 
   // Get signal at the current time stamp
-  //tmp = V_.pattern[ (int)(tick * time_res) % V_.trial_length ];
-  tmp = V_.pattern[ tick ];
+  tmp = V_.pattern[ (int)(tick % V_.trial_length) ];
+  //tmp = V_.pattern[ tick ];
+
+  // Check on possible nan values
+  if(std::isnan(tmp)){
+    tmp = 0;
+  }
 
   // Check if neuron is sensitive to positive or negative signals
   if ( (tmp<0 && P_.pos) || (tmp>=0 && !P_.pos) ){
