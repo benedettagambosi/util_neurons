@@ -137,6 +137,7 @@ void tracking_neuron::init_buffers_(){
   std::ifstream pattern_file_pt(P_.pattern_file);
 
   double tmp=0;
+  V_.trial_length = 0;
   while(pattern_file_pt >> tmp) {
     V_.pattern.push_back(tmp);
     V_.trial_length++;
