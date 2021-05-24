@@ -156,8 +156,8 @@ void diff_neuron::update(nest::Time const & origin,const long from, const long t
   double time_res = nest::Time::get_resolution().get_ms();
 
   long buf_sz = std::lrint(P_.buffer_size / time_res);
-  int spike_count_in_pos = 0;
-  int spike_count_in_neg = 0;
+  double spike_count_in_pos = 0;
+  double spike_count_in_neg = 0;
   double spike_count_in = 0;
   long spike_count_out = 0;
 
@@ -180,6 +180,8 @@ void diff_neuron::update(nest::Time const & origin,const long from, const long t
     }
   }
 
+  S_.in_rate = 1000.0 * spike_count_in / P_.buffer_size ;
+
   //std::cout << "-----------" << std::endl;
   //std::cout << origin << "   " << tick << std::endl;
   //std::cout << "Pos_w: " << spike_count_in_pos << std::endl;
@@ -196,31 +198,30 @@ void diff_neuron::update(nest::Time const & origin,const long from, const long t
   // those corresponding to the highest channel (worst case scenario). If the
   // estimated excitatory-inhibitory difference falls lower than this threshold,
   // I consider this difference equal to zero.
-  lamda_est   = std::max( abs(spike_count_in_pos), abs(spike_count_in_neg) );
+  lamda_est   = abs(S_.in_rate);
   std_skellam = sqrt(2*lamda_est);
   thsd        = std_skellam;
 
   // If the number of spikes is lower than chance, set it to zero
-  if ( abs(spike_count_in)<thsd )
-    spike_count_in = 0;
+  if ( abs(S_.in_rate)<thsd )
+    S_.in_rate = 0;
 
   // Remove the chance threshold to the number of spikes
-  if ( spike_count_in>0 )
-    spike_count_in = spike_count_in - thsd;
-  if ( spike_count_in<0 )
-    spike_count_in = spike_count_in + thsd;
+  if ( S_.in_rate>0 )
+    S_.in_rate = S_.in_rate - thsd;
+  if ( S_.in_rate<0 )
+    S_.in_rate = S_.in_rate + thsd;
 
   // Check if neuron is sensitive to positive or negative signals
-  if ( (spike_count_in<0 && P_.pos) || (spike_count_in>0 && !P_.pos) ){
-    spike_count_in = 0;
+  if ( (S_.in_rate<0 && P_.pos) || (S_.in_rate>0 && !P_.pos) ){
+    S_.in_rate = 0;
   }
 
   // Multiply by 1000 to translate rate in Hz (buffer size is in milliseconds)
   // Absolute value because spike_count_in could be a negative value (due to
   // negative weights in inhibitory synapses, and negative neurons - i.e. P_pos
   // is false).
-  S_.in_rate = 1000.0 * abs(spike_count_in) / P_.buffer_size ;
-  S_.out_rate = P_.base_rate + P_.kp * S_.in_rate;
+  S_.out_rate = P_.base_rate + P_.kp * abs(S_.in_rate);
 
   /*
   std::cout << "std_skl  : " << std_skellam << std::endl;
