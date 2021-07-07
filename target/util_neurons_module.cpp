@@ -47,6 +47,10 @@
 
 #include "basic_neuron.h"
 
+#include "state_neuron.h"
+
+#include "rb_neuron.h"
+
 #include "tracking_neuron.h"
 
 // -- Interface to dynamic module loader ---------------------------------------
@@ -112,6 +116,10 @@ util_neurons_module::init( SLIInterpreter* i )
     nest::kernel().model_manager.register_node_model<diff_neuron>("diff_neuron");
 
     nest::kernel().model_manager.register_node_model<basic_neuron>("basic_neuron");
+
+    nest::kernel().model_manager.register_node_model<state_neuron>("state_neuron");
+
+    nest::kernel().model_manager.register_node_model<rb_neuron>("rb_neuron");
 
     nest::kernel().model_manager.register_node_model<tracking_neuron>("tracking_neuron");
 

@@ -44,6 +44,10 @@ set( MODULE_SOURCES
 
       basic_neuron.cpp basic_neuron.h
 
+      state_neuron.cpp state_neuron.h
+
+      rb_neuron.cpp rb_neuron.h
+
       tracking_neuron.cpp tracking_neuron.h
 
       diff_neuron.cpp diff_neuron.h
