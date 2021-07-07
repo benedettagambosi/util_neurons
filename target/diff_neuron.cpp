@@ -221,7 +221,7 @@ void diff_neuron::update(nest::Time const & origin,const long from, const long t
   // Absolute value because spike_count_in could be a negative value (due to
   // negative weights in inhibitory synapses, and negative neurons - i.e. P_pos
   // is false).
-  S_.out_rate = P_.base_rate + P_.kp * abs(S_.in_rate);
+  S_.out_rate = std::max(0.0, P_.base_rate + P_.kp * abs(S_.in_rate));
 
   /*
   std::cout << "std_skl  : " << std_skellam << std::endl;
