@@ -1,3 +1,13 @@
+import os
+os.environ["NEST_MODULE_PATH"] = "/home/massimo/nest-simulator-2.18.0-build-mpi-music/lib/nest"
+os.environ["SLI_PATH"] = "/home/massimo/nest-simulator-2.18.0-build-mpi-music/share/nest/sli"
+os.environ["LD_LIBRARY_PATH"] = "/home/massimo/nest-simulator-2.18.0-build-mpi-music/lib/nest:/home/massimo/bin/lib"
+os.environ["PATH"] = "/home/massimo/bin/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+os.environ["SPATIALINDEX_C_LIBRARY"] = "/home/massimo/bin/lib/libspatialindex.so"
+os.environ["PYTHONPATH"] = "/home/massimo/extra-cereb-nest/Tests:/opt/amber18/lib/python3.6/site-packages/:/home/massimo/.local/nrn/lib/python:"
+import sys
+sys.path.append('/home/massimo/nest-simulator-2.18.0-build-mpi-music/lib/python3.6/site-packages/')
+
 import nest
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,9 +41,9 @@ Ns = 50 # Number of Poisson neurons (source)
 Nm = 50 # Number of Motor cortex neurons (destination)
 
 # Base rates
-bas_rate_motor   = 0.0;
-bas_rate_planner = 0.0;
-bas_rate_state   = 0.0;
+bas_rate_motor   = 0.0
+bas_rate_planner = 0.0
+bas_rate_state   = 0.0
 
 # Gain
 gain_plan  = 1.0
@@ -43,10 +53,10 @@ gain_stEst = 1.0
 gain = 1.0
 
 # Create trajectories
-trj_des  = desiredTrajectory(50.0, 50.0, time_span, time_vect)
+trj_des  = desiredTrajectory(0.0, 100.0, time_span, time_vect)
 #trj_err  = -5*np.sin(2*np.pi*(1/time_span)*time_vect)
 #trj_real = trj_des + trj_err
-trj_real  = desiredTrajectory(40.0,40.0, time_span, time_vect)
+trj_real  = desiredTrajectory(0.0,40.0, time_span, time_vect)
 #trj_real = trj_des
 
 ########## Convert desired and real trajectories into spike trains ##########

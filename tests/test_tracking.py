@@ -1,3 +1,13 @@
+import os
+os.environ["NEST_MODULE_PATH"] = "/home/massimo/nest-simulator-2.18.0-build-mpi-music/lib/nest"
+os.environ["SLI_PATH"] = "/home/massimo/nest-simulator-2.18.0-build-mpi-music/share/nest/sli"
+os.environ["LD_LIBRARY_PATH"] = "/home/massimo/nest-simulator-2.18.0-build-mpi-music/lib/nest:/home/massimo/bin/lib"
+os.environ["PATH"] = "/home/massimo/bin/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+os.environ["SPATIALINDEX_C_LIBRARY"] = "/home/massimo/bin/lib/libspatialindex.so"
+os.environ["PYTHONPATH"] = "/home/massimo/extra-cereb-nest/Tests:/opt/amber18/lib/python3.6/site-packages/:/home/massimo/.local/nrn/lib/python:"
+import sys
+sys.path.append('/home/massimo/nest-simulator-2.18.0-build-mpi-music/lib/python3.6/site-packages/')
+
 import nest
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,7 +41,7 @@ bas_rate_track = 0.0 #baseline
 # Task definition
 pos_init = -20.0
 pos_target = 10.0
-file_trj_des = "/media/xis/data/work/projects/nest-modules/util_neurons/tests/joint1.dat"
+file_trj_des = "/home/massimo/Scrivania/dottorato/bsb_env/util_neurons/tests/joint1.dat"
 
 # Generate desired trajectory...
 trj_des  = desiredTrajectory(pos_init, pos_target, time_span, time_vect)
@@ -43,10 +53,10 @@ a_file.close()
 
 ########################### Create neurons ###########################
 track_p = nest.Create("tracking_neuron", Nt)
-nest.SetStatus(track_p, {"kp": 10.0, "pos": True, "base_rate": bas_rate_track, "pattern_file": file_trj_des})
+nest.SetStatus(track_p, {"kp": 10.0, "pos": True, "repeatable":True,"base_rate": bas_rate_track, "pattern_file": file_trj_des})
 
 track_n = nest.Create("tracking_neuron", Nt)
-nest.SetStatus(track_n, {"kp": 10.0, "pos": False, "base_rate": bas_rate_track, "pattern_file": file_trj_des})
+nest.SetStatus(track_n, {"kp": 10.0, "pos": False, "repeatable":True,"base_rate": bas_rate_track, "pattern_file": file_trj_des})
 
 ########################### DEVICES ###########################
 spikedet_p = nest.Create("spike_detector", params={"withgid": True, "withtime": True})
