@@ -94,8 +94,9 @@ state_neuron::state_neuron():Archiving_Node(), P_(), S_(), B_(*this)
   recordablesMap_.create();
 
   P_.kp = 1; // as real
-  P_.num_first = 50.0; // as real
-  P_.num_second = 50.0; // as real
+  P_.pos = true; // as boolean
+  P_.num_first = 0.0; // as real
+  P_.num_second = 0.0; // as real
   P_.buffer_size = 100*1.0; // as real
   P_.base_rate = 0; // as real
   S_.in_rate = 0; // as real
@@ -105,6 +106,7 @@ state_neuron::state_neuron():Archiving_Node(), P_(), S_(), B_(*this)
 state_neuron::state_neuron(const state_neuron& __n):
   Archiving_Node(), P_(__n.P_), S_(__n.S_), B_(__n.B_, *this){
   P_.kp = __n.P_.kp;
+  P_.pos = __n.P_.pos;
   P_.num_first = __n.P_.num_first;
   P_.num_second = __n.P_.num_second;
 
@@ -137,6 +139,13 @@ void state_neuron::init_buffers_(){
 
   B_.logger_.reset(); // includes resize
   Archiving_Node::clear_history();
+  if (P_.pos == true){
+    std::ofstream fout("variability_pos.txt"); // Initialize output file
+  }
+  else{
+    std::ofstream fout("variability_neg.txt"); // Initialize output file
+  }
+  
 
 }
 
@@ -157,14 +166,90 @@ void state_neuron::update(nest::Time const & origin,const long from, const long 
 
   long tick = origin.get_steps();
   double time_res = nest::Time::get_resolution().get_ms();
-
-  long buf_sz = std::lrint(P_.buffer_size / time_res);
   long spike_count_out = 0;
+
+  // Update rate
+  //if (tick % 500 == 0){ // every 50 ms
+  long buf_sz = std::lrint(P_.buffer_size / time_res);
   int num_first = int(P_.num_first);
   int num_second = int(P_.num_second);
 
-  if (tick > 0){
-    if (tick % buf_sz == 0){
+  std::map<long, double> spikes_first_buff;
+  std::map<long, double> spikes_second_buff;
+  std::map<long, double>::iterator it;
+  for ( long i = 0; i < buf_sz; i++ ){
+
+    for (it = B_.first_spikes_buffer[tick-i].begin(); it != B_.first_spikes_buffer[tick-i].end(); it++)
+    {
+      spikes_first_buff[it->first] += double(it->second);
+    }
+
+    for (it = B_.second_spikes_buffer[tick-i].begin(); it != B_.second_spikes_buffer[tick-i].end(); it++)
+    {
+      spikes_second_buff[it->first] += double(it->second);
+    }
+  }
+
+  // First buffer
+  double variability_first;
+  double mean_first;
+  if (num_first == 0){
+    variability_first = 1e6;
+    mean_first = 0.0;
+  }
+  else{
+    mean_first = 0;
+    for (it = spikes_first_buff.begin(); it != spikes_first_buff.end(); it++)
+    {
+      mean_first += double(it->second);
+    }
+    mean_first /= num_first;
+    if (mean_first != 0){
+      double var_first = 0;
+      for (it = spikes_first_buff.begin(); it != spikes_first_buff.end(); it++)
+      {
+        var_first += (double(it->second) - mean_first) * (double(it->second) - mean_first);
+      }
+      //var_first = sqrt(var_first/num_first); // standard deviation
+      var_first = var_first/num_first; // variance
+      variability_first = var_first/mean_first;
+    }
+    else{
+      variability_first = 3.0; // huge value for a CV
+    }
+  }
+  
+  
+
+  // Second buffer
+  double variability_second;
+  double mean_second;
+  if (num_second == 0){
+    variability_second = 1e6;
+    mean_second = 0.0;
+  }
+  else{
+    mean_second = 0;
+    for (it = spikes_second_buff.begin(); it != spikes_second_buff.end(); it++)
+    {
+      mean_second += double(it->second);
+    }
+    mean_second /= num_second;
+    if (mean_second != 0){
+      double var_second = 0;
+      for (it = spikes_second_buff.begin(); it != spikes_second_buff.end(); it++)
+      {
+        var_second += (double(it->second) - mean_second) * (double(it->second) - mean_second);
+      }
+      //var_second = sqrt(var_second/num_second); // standard deviation
+      var_second = var_second/num_second; // variance
+      variability_second = var_second/mean_second;
+    }
+    else{
+      variability_second = 3.0; // huge value for a CV
+    }
+  }
+  /*
       //std::cout << "Time: " << tick*time_res << std::endl;
       double spikes_first_buff[num_first] = {};
       double spikes_second_buff[num_second] = {};
@@ -177,32 +262,32 @@ void state_neuron::update(nest::Time const & origin,const long from, const long 
       {
         spikes_first_buff[i] = double(it->second);
         i++;
-        fout<< double(it->second) << "," << double(it->second) << std::endl;
+        fout<< double(it->first) << "," << double(it->second) << std::endl;
       }
       fout.close();
-      std::cout << "Second buffer:" << std::endl;
+      //std::cout << "Second buffer:" << std::endl;
       fout.open("second_buffer.txt",std::ofstream::app);
       i = 0;
       for (it = B_.second_spikes_buffer.begin(); it != B_.second_spikes_buffer.end(); it++)
       {
            spikes_second_buff[i] = double(it->second);
            i++;
-           std::cout << double(it->second) << ' ';
-           fout<< double(it->second) << "," << double(it->second) << std::endl;
+           //std::cout << double(it->second) << ' ';
+           fout<< double(it->first) << "," << double(it->second) << std::endl;
       }
       fout.close();
-      std::cout << std::endl;
+      //std::cout << std::endl;
       //std::cout << (sizeof(spikes_second_buff)/sizeof(*spikes_second_buff)) << std::endl;
 
       // First buffer
-      std::cout << "Test:" << std::endl;
+      //std::cout << "Test:" << std::endl;
       double mean_first = 0;
       for(int n = 0; n < num_first; n++ )
       {
         mean_first += spikes_first_buff[n];
-        std::cout << spikes_first_buff[n] << ' ';
+        //std::cout << spikes_first_buff[n] << ' ';
       }
-      std::cout << std::endl;
+      //std::cout << std::endl;
       mean_first /= num_first;
       double variability_first;
       if (mean_first != 0){
@@ -240,59 +325,45 @@ void state_neuron::update(nest::Time const & origin,const long from, const long 
       else{
         variability_second = 3.0;
       }
-      std::cout << "Variability first: " << variability_first << std::endl; 
-      std::cout << "Variability second: " << variability_second << std::endl;
-      fout.open("miofile.txt",std::ofstream::app);
-      fout<< variability_first << ",";
-      fout<< variability_second << std::endl;
-      fout.close();
-      
-      //std::cout << "Mean value second buffer: " << mean << std::endl;
-      //std::cout << "Variability second buffer: " << variability << std::endl;
-      B_.first_spikes_buffer.clear();
-      B_.second_spikes_buffer.clear();  
-      
-      // Bayesian integration   
-      double total_var = variability_first + variability_second; 
-      double out_spikes = variability_first/total_var*mean_second + variability_second/total_var*mean_first;
-      out_spikes = std::max(0.0, out_spikes);
-
-      // Multiply by 1000 to translate rate in Hz (buffer size is in milliseconds)
-      S_.in_rate = 1000.0 * out_spikes / P_.buffer_size ;
-      S_.out_rate = P_.base_rate + P_.kp * S_.in_rate;
-
-      // Set Poisson lambda respective time resolution
-      V_.poisson_dev_.set_lambda( S_.out_rate * time_res * 1e-3 );
-      //std::cout << "In rate: " << S_.in_rate << std::endl;
-    }
-  }
-  else{ // tick == 0
-    std::ofstream fout("miofile.txt"); // Initialize output file
-  }
+  */ 
   
-  /*
-  if (tick == 800) {
-    std::map<long, double>::iterator it;
+  // Bayesian integration   
+  double total_var = variability_first + variability_second; 
+  double out_spikes = variability_first/total_var*mean_second + variability_second/total_var*mean_first;
+  out_spikes = std::max(0.0, out_spikes);
 
-    std::cout << "First buffer" << std::endl;   
-    for (it = B_.first_spikes_buffer.begin(); it != B_.first_spikes_buffer.end(); it++)
-    {
-        std::cout << it->first    // string (key)
-                  << ':'
-                  << it->second   // string's value 
-                  << std::endl;
+  if ((num_first != 0) & (num_second != 0)){
+    if (tick % 50 == 0){ // every 5 ms
+      std::ofstream fout;
+      if (P_.pos == true){
+        fout.open("variability_pos.txt",std::ofstream::app);
+      }
+      else{
+        fout.open("variability_neg.txt",std::ofstream::app);
+      }
+      fout<< "Time (ms): " << tick/10 << "; ";
+      fout<< float(variability_first) << ',';
+      fout<< float(variability_second) << std::endl;
+      fout.close();
     }
-    std::cout << "Second buffer" << std::endl;
-    for (it = B_.second_spikes_buffer.begin(); it != B_.second_spikes_buffer.end(); it++)
-    {
-        std::cout << it->first    // string (key)
-                  << ':'
-                  << it->second   // string's value 
-                  << std::endl;
+
+    if (tick % 500 == 0){ // every 50 ms
+      std::cout << "First buffer: variability = " << variability_first << " signal = " << mean_first << std::endl;
+      std::cout << "Second buffer: variability = " << variability_second << " signal = " << mean_second << std::endl; 
+      std::cout << "Bayesian output: " << out_spikes << std::endl;
     }
-    std::cout << "Fine" << std::endl;
   }
-  */
+
+  // Multiply by 1000 to translate rate in Hz (buffer size is in milliseconds)
+  S_.in_rate = 1000.0 * out_spikes / P_.buffer_size ;
+  S_.out_rate = P_.base_rate + P_.kp * S_.in_rate;
+
+  // Set Poisson lambda respective time resolution
+  V_.poisson_dev_.set_lambda( S_.out_rate * time_res * 1e-3 );
+  //std::cout << "In rate: " << S_.in_rate << std::endl;
+  
+  //} // close update rate
+
   for ( long lag = from ; lag < to ; ++lag ) {
     // Number of output spikes based (i.e. draw from Poisson distribution)
     spike_count_out = V_.poisson_dev_.ldev( rng );
@@ -319,31 +390,31 @@ void state_neuron::handle(nest::DataLoggingRequest& e){
 void state_neuron::handle(nest::SpikeEvent &e){
   assert(e.get_delay_steps() > 0);
 
-  //long origin_step       = nest::kernel().simulation_manager.get_slice_origin().get_steps();
-  //long delivery_step_rel = e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin() );
-  //long tick              = origin_step + delivery_step_rel;
+  long origin_step       = nest::kernel().simulation_manager.get_slice_origin().get_steps();
+  long delivery_step_rel = e.get_rel_delivery_steps( nest::kernel().simulation_manager.get_slice_origin() );
+  long tick              = origin_step + delivery_step_rel;
 
-  //const double weight       = e.get_weight();
+  const double weight       = std::abs(e.get_weight()); // bayesian integration does not use signs
   //const double multiplicity = e.get_multiplicity();
   const double sender_id    = e.get_sender_gid();
 
   std::map<long, double>::iterator it; 
   if (e.get_rport() == 1){
-    it = B_.first_spikes_buffer.find(sender_id);
-    if (it != B_.first_spikes_buffer.end()){
-      B_.first_spikes_buffer[sender_id] += 1;
+    it = B_.first_spikes_buffer[tick].find(sender_id);
+    if (it != B_.first_spikes_buffer[tick].end()){
+      B_.first_spikes_buffer[tick][sender_id] += weight;
     }
     else{
-      B_.first_spikes_buffer[sender_id] = 1;
+      B_.first_spikes_buffer[tick][sender_id] = weight;
     }
   }
   else if (e.get_rport() == 2){
-    it = B_.second_spikes_buffer.find(sender_id);
-    if (it != B_.second_spikes_buffer.end()){
-      B_.second_spikes_buffer[sender_id] += 1;
+    it = B_.second_spikes_buffer[tick].find(sender_id);
+    if (it != B_.second_spikes_buffer[tick].end()){
+      B_.second_spikes_buffer[tick][sender_id] += weight;
     }
     else{
-      B_.second_spikes_buffer[sender_id] = 1;
+      B_.second_spikes_buffer[tick][sender_id] = weight;
     }
   }
 }

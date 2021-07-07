@@ -155,6 +155,7 @@ private:
   struct Parameters_{
 
     double kp;
+    bool pos;
     double num_first;
     double num_second;
     double buffer_size;
@@ -236,8 +237,10 @@ private:
     double exc_spikes_grid_sum_;
 
     std::map<long, double> in_spikes_;
-    std::map<long, double> first_spikes_buffer;
-    std::map<long, double> second_spikes_buffer;
+    //std::map<long, double> first_spikes_buffer;
+    //std::map<long, double> second_spikes_buffer;
+    std::map <double, std::map<long, double>> first_spikes_buffer;
+    std::map <double, std::map<long, double>> second_spikes_buffer;
 
     };
   inline double get_in_rate() const {
@@ -261,6 +264,13 @@ private:
     P_.kp = __v;
   }
 
+  inline bool get_pos() const {
+    return P_.pos;
+  }
+  inline void set_pos(const bool __v) {
+    P_.pos = __v;
+  }
+  
   inline double get_num_first() const {
     return P_.num_first;
   }
@@ -359,6 +369,8 @@ inline nest::port state_neuron::handles_test_event(
 inline void state_neuron::get_status(DictionaryDatum &__d) const{
   def<double>(__d, "kp", get_kp());
 
+  def<bool>(__d, "pos", get_pos());
+
   def<double>(__d, "num_first", get_num_first());
 
   def<double>(__d, "num_second", get_num_second());
@@ -384,6 +396,8 @@ inline void state_neuron::set_status(const DictionaryDatum &__d){
   double tmp_kp = get_kp();
   updateValue<double>(__d, "kp", tmp_kp);
 
+  bool tmp_pos = get_pos();
+  updateValue<bool>(__d, "pos", tmp_pos);
 
   double tmp_num_first = get_num_first();
   updateValue<double>(__d, "num_first", tmp_num_first);
@@ -419,7 +433,7 @@ inline void state_neuron::set_status(const DictionaryDatum &__d){
 
   set_kp(tmp_kp);
 
-
+  set_pos(tmp_pos);
 
   set_num_first(tmp_num_first);
 
