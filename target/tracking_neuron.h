@@ -158,6 +158,7 @@ private:
 
     double kp;
     bool pos;
+    bool repeatable;
     double buffer_size;
     double base_rate;
     //double pattern;
@@ -237,7 +238,7 @@ private:
     nest::RingBuffer exc_spikes;
     double exc_spikes_grid_sum_;
 
-    std::vector <std::vector<double> > traj_;
+    std::vector<long> trial_spikes_; // Necessary in case repeatable == true
 
     };
   inline double get_in_rate() const {
@@ -266,6 +267,13 @@ private:
   }
   inline void set_pos(const bool __v) {
     P_.pos = __v;
+  }
+
+  inline bool get_repeatability() const {
+    return P_.repeatable;
+  }
+  inline void set_repeatability(const bool __v) {
+    P_.repeatable = __v;
   }
 
   inline double get_buffer_size() const {
@@ -365,6 +373,8 @@ inline void tracking_neuron::get_status(DictionaryDatum &__d) const{
 
   def<bool>(__d, "pos", get_pos());
 
+  def<bool>(__d, "repeatable", get_repeatability());
+
   def<double>(__d, "buffer_size", get_buffer_size());
 
   def<double>(__d, "base_rate", get_base_rate());
@@ -394,6 +404,8 @@ inline void tracking_neuron::set_status(const DictionaryDatum &__d){
   bool tmp_pos = get_pos();
   updateValue<bool>(__d, "pos", tmp_pos);
 
+  bool tmp_repeatable = get_repeatability();
+  updateValue<bool>(__d, "repeatable", tmp_repeatable);
 
   double tmp_buffer_size = get_buffer_size();
   updateValue<double>(__d, "buffer_size", tmp_buffer_size);
@@ -432,6 +444,8 @@ inline void tracking_neuron::set_status(const DictionaryDatum &__d){
 
   set_pos(tmp_pos);
 
+
+  set_repeatability(tmp_repeatable);
 
 
   set_buffer_size(tmp_buffer_size);

@@ -96,6 +96,7 @@ tracking_neuron::tracking_neuron():Archiving_Node(), P_(), S_(), B_(*this)
 
   P_.kp = 1; // as real
   P_.pos = true; // as boolean
+  P_.repeatable = false; // as boolean
   P_.buffer_size = 100*1.0; // as real
   P_.base_rate = 0; // as real
   //P_.pattern = 0; // as real
@@ -107,6 +108,7 @@ tracking_neuron::tracking_neuron(const tracking_neuron& __n):
   Archiving_Node(), P_(__n.P_), S_(__n.S_), B_(__n.B_, *this){
   P_.kp = __n.P_.kp;
   P_.pos = __n.P_.pos;
+  P_.repeatable = __n.P_.repeatable;
   P_.buffer_size = __n.P_.buffer_size;
   P_.base_rate = __n.P_.base_rate;
   P_.pattern_file = __n.P_.pattern_file;
@@ -184,15 +186,48 @@ void tracking_neuron::update(nest::Time const & origin,const long from, const lo
     tmp = 0;
   }
 
+  if (P_.repeatable == true){
+    // init buffer
+    if (B_.trial_spikes_.empty() == true)
+    {
+      nest::Time::ms trial_length_ms(V_.trial_length);
+      nest::Time trial_length(trial_length_ms);
+
+      long buffer_size_ = trial_length.get_steps();
+      B_.trial_spikes_.resize(buffer_size_);
+    }
+  }
+
   S_.out_rate = P_.base_rate + P_.kp * abs(tmp);
+  //std::cout << "Out: " << S_.out_rate << std::endl;
+  //std::cout << "Tmp: " << tmp << std::endl;
+  S_.out_rate = int(S_.out_rate/10)*10.0;
 
   // TODO: I probably need to scale the signal to make sure neuron does not saturate
   V_.poisson_dev_.set_lambda( S_.out_rate * time_res * 1e-3 );
+  //librandom::RngPtr rng = nest::kernel().rng_manager.get_rng( get_thread() );
 
   for ( long lag = from ; lag < to ; ++lag ) {
+    if (P_.repeatable == true){
+      nest::delay spike_i = (tick + lag) % V_.trial_length;
 
-    // Number of output spikes based (i.e. draw from Poisson distribution)
-    spike_count_out = V_.poisson_dev_.ldev( rng );
+      if ( (tick + lag) <= V_.trial_length )
+      {
+        //librandom::RngPtr rng = nest::kernel().rng_manager.get_rng( get_thread() );
+        // Number of output spikes based (i.e. draw from Poisson distribution)
+        spike_count_out = V_.poisson_dev_.ldev( rng );        
+        B_.trial_spikes_[spike_i] = spike_count_out;
+      }
+      else
+      {
+        spike_count_out = B_.trial_spikes_[spike_i];
+      }
+    }
+    else{
+      //librandom::RngPtr rng = nest::kernel().rng_manager.get_rng( get_thread() );
+      // Number of output spikes based (i.e. draw from Poisson distribution)
+      spike_count_out = V_.poisson_dev_.ldev( rng );
+    }
 
     // Send spike with multiplicity 1 (one could also respect multiplicity)
     if ( spike_count_out > 0 ){
