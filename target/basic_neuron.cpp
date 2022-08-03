@@ -41,22 +41,22 @@
 
 #include "basic_neuron.h"
 
-
+using namespace nest;
 /* ----------------------------------------------------------------
 * Recordables map
 * ---------------------------------------------------------------- */
-nest::RecordablesMap<basic_neuron> basic_neuron::recordablesMap_;
+nest::RecordablesMap< mynest::basic_neuron> mynest::basic_neuron::recordablesMap_;
 
 namespace nest
 {
   // Override the create() method with one call to RecordablesMap::insert_()
   // for each quantity to be recorded.
-  template <> void RecordablesMap<basic_neuron>::create(){
+  template <> void RecordablesMap<mynest::basic_neuron>::create(){
   // use standard names whereever you can for consistency!
 
-  insert_("in_rate", &basic_neuron::get_in_rate);
+  insert_("in_rate", &mynest::basic_neuron::get_in_rate);
 
-  insert_("out_rate", &basic_neuron::get_out_rate);
+  insert_("out_rate", &mynest::basic_neuron::get_out_rate);
   }
 }
 
@@ -65,21 +65,21 @@ namespace nest
  * Note: the implementation is empty. The initialization is of variables
  * is a part of the basic_neuron's constructor.
  * ---------------------------------------------------------------- */
-basic_neuron::Parameters_::Parameters_(){}
+mynest::basic_neuron::Parameters_::Parameters_(){}
 
-basic_neuron::State_::State_(){}
+mynest::basic_neuron::State_::State_(){}
 
 /* ----------------------------------------------------------------
 * Parameter and state extractions and manipulation functions
 * ---------------------------------------------------------------- */
 
-basic_neuron::Buffers_::Buffers_(basic_neuron &n):
+mynest::basic_neuron::Buffers_::Buffers_(basic_neuron &n):
   logger_(n){
   // Initialization of the remaining members is deferred to
   // init_buffers_().
 }
 
-basic_neuron::Buffers_::Buffers_(const Buffers_ &, basic_neuron &n):
+mynest::basic_neuron::Buffers_::Buffers_(const Buffers_ &, basic_neuron &n):
   logger_(n){
   // Initialization of the remaining members is deferred to
   // init_buffers_().
@@ -88,7 +88,7 @@ basic_neuron::Buffers_::Buffers_(const Buffers_ &, basic_neuron &n):
 /* ----------------------------------------------------------------
  * Default and copy constructor for node, and destructor
  * ---------------------------------------------------------------- */
-basic_neuron::basic_neuron():Archiving_Node(), P_(), S_(), B_(*this)
+mynest::basic_neuron::basic_neuron():Archiving_Node(), P_(), S_(), B_(*this)
 {
   recordablesMap_.create();
 
@@ -100,7 +100,7 @@ basic_neuron::basic_neuron():Archiving_Node(), P_(), S_(), B_(*this)
   S_.out_rate = 0; // as real
 }
 
-basic_neuron::basic_neuron(const basic_neuron& __n):
+mynest::basic_neuron::basic_neuron(const basic_neuron& __n):
   Archiving_Node(), P_(__n.P_), S_(__n.S_), B_(__n.B_, *this){
   P_.kp = __n.P_.kp;
   P_.pos = __n.P_.pos;
@@ -112,21 +112,21 @@ basic_neuron::basic_neuron(const basic_neuron& __n):
 
 }
 
-basic_neuron::~basic_neuron(){
+mynest::basic_neuron::~basic_neuron(){
 }
 
 /* ----------------------------------------------------------------
 * Node initialization functions
 * ---------------------------------------------------------------- */
 
-void basic_neuron::init_state_(const Node& proto){
+void mynest::basic_neuron::init_state_(const Node& proto){
   const basic_neuron& pr = downcast<basic_neuron>(proto);
   S_ = pr.S_;
 }
 
 
 
-void basic_neuron::init_buffers_(){
+void mynest::basic_neuron::init_buffers_(){
 
   get_inh_spikes().clear(); //includes resize
   get_exc_spikes().clear(); //includes resize
@@ -136,7 +136,7 @@ void basic_neuron::init_buffers_(){
 
 }
 
-void basic_neuron::calibrate(){
+void mynest::basic_neuron::calibrate(){
   B_.logger_.init();
 }
 
@@ -147,7 +147,7 @@ void basic_neuron::calibrate(){
 /*
  *
  */
-void basic_neuron::update(nest::Time const & origin,const long from, const long to){
+void mynest::basic_neuron::update(nest::Time const & origin,const long from, const long to){
 
   librandom::RngPtr rng = nest::kernel().rng_manager.get_rng( get_thread() );
 
@@ -200,12 +200,12 @@ void basic_neuron::update(nest::Time const & origin,const long from, const long 
 
 // Do not move this function as inline to h-file. It depends on
 // universal_data_logger_impl.h being included here.
-void basic_neuron::handle(nest::DataLoggingRequest& e){
+void mynest::basic_neuron::handle(nest::DataLoggingRequest& e){
   B_.logger_.handle(e);
 }
 
 
-void basic_neuron::handle(nest::SpikeEvent &e){
+void mynest::basic_neuron::handle(nest::SpikeEvent &e){
   assert(e.get_delay_steps() > 0);
 
   long origin_step       = nest::kernel().simulation_manager.get_slice_origin().get_steps();

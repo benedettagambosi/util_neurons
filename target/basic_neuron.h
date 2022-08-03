@@ -21,13 +21,13 @@
 *
 *  2021-03-01 11:52:50.555794
 */
-#ifndef BASIC_NEURON
-#define BASIC_NEURON
+#ifndef BASIC_NEURON_H
+#define BASIC_NEURON_H
 
 #include "config.h"
 
 // Includes from librandom:
-#include "poisson_randomdev.h"
+// #include "poisson_randomdev.h"
 
 // Includes from nestkernel:
 #include "archiving_node.h"
@@ -41,6 +41,8 @@
 // Includes from sli:
 #include "dictdatum.h"
 
+namespace mynest
+{
 /* BeginDocumentation
   Name: basic_neuron.
 
@@ -63,7 +65,8 @@
 
   Receives: Spike,  DataLoggingRequest
 */
-class basic_neuron : public nest::Archiving_Node{
+class basic_neuron : public nest::Archiving_Node
+{
 public:
   /**
   * The constructor is only used to create the model prototype in the model manager.
@@ -76,7 +79,7 @@ public:
   *       Initialization of buffers and interal variables is deferred to
   *       @c init_buffers_() and @c calibrate().
   */
-  basic_neuron(const basic_neuron &);
+  basic_neuron(const basic_neuron& );
 
   /**
   * Releases resources.
@@ -94,7 +97,7 @@ public:
   /**
   * Used to validate that we can send nest::SpikeEvent to desired target:port.
   */
-  nest::port send_test_event(nest::Node& target, nest::rport receptor_type, nest::synindex, bool);
+  nest::port send_test_event(nest::Node& target, nest::rport receptor_type, nest::synindex, bool) override;
 
   /**
   * @defgroup mynest_handle Functions handling incoming events.
@@ -102,16 +105,16 @@ public:
   * defining @c handle() and @c connect_sender() for the given event.
   * @{
   */
-  void handle(nest::SpikeEvent &);        //! accept spikes
-  void handle(nest::DataLoggingRequest &);//! allow recording with multimeter
+  void handle(nest::SpikeEvent&) override;        //! accept spikes
+  void handle(nest::DataLoggingRequest&) override;//! allow recording with multimeter
 
-  nest::port handles_test_event(nest::SpikeEvent&, nest::port);
-  nest::port handles_test_event(nest::DataLoggingRequest&, nest::port);
+  nest::port handles_test_event(nest::SpikeEvent&, nest::port) override;
+  nest::port handles_test_event(nest::DataLoggingRequest&, nest::port) override;
   /** @} */
 
   // SLI communication functions:
-  void get_status(DictionaryDatum &) const;
-  void set_status(const DictionaryDatum &);
+  void get_status(DictionaryDatum&) const override;
+  void set_status(const DictionaryDatum&) override;
 
 private:
   //! Reset parameters and state of neuron.
@@ -126,11 +129,11 @@ private:
   void calibrate();
 
   //! Take neuron through given time interval
-  void update(nest::Time const &, const long, const long);
+  void update(nest::Time const&, const long, const long) override;
 
   // The next two classes need to be friends to access the State_ class/member
-  friend class nest::RecordablesMap<basic_neuron>;
-  friend class nest::UniversalDataLogger<basic_neuron>;
+  friend class nest::RecordablesMap< basic_neuron >;
+  friend class nest::UniversalDataLogger< basic_neuron >;
 
   /**
   * Free parameters of the neuron.
@@ -187,9 +190,10 @@ private:
 
 
     double in_rate;
-
     double out_rate;
-        State_();
+
+    State_();
+
   };
 
   /**
@@ -218,8 +222,8 @@ private:
     *       cannot destroy themselves, Buffers_ will need a destructor.
     */
   struct Buffers_ {
-    Buffers_(basic_neuron &);
-    Buffers_(const Buffers_ &, basic_neuron &);
+    Buffers_(basic_neuron& );
+    Buffers_(const Buffers_& , basic_neuron& );
 
     /** Logger for all analog data */
     nest::UniversalDataLogger<basic_neuron> logger_;
@@ -311,7 +315,7 @@ private:
 /** @} */
 }; /* neuron basic_neuron */
 
-inline nest::port basic_neuron::send_test_event(
+inline nest::port mynest::basic_neuron::send_test_event(
     nest::Node& target, nest::rport receptor_type, nest::synindex, bool){
   // You should usually not change the code in this function.
   // It confirms that the target of connection @c c accepts @c nest::SpikeEvent on
@@ -321,7 +325,7 @@ inline nest::port basic_neuron::send_test_event(
   return target.handles_test_event(e, receptor_type);
 }
 
-inline nest::port basic_neuron::handles_test_event(nest::SpikeEvent&, nest::port receptor_type){
+inline nest::port mynest::basic_neuron::handles_test_event(nest::SpikeEvent&, nest::port receptor_type){
 
     // You should usually not change the code in this function.
     // It confirms to the connection management system that we are able
@@ -334,7 +338,7 @@ inline nest::port basic_neuron::handles_test_event(nest::SpikeEvent&, nest::port
 
 
 
-inline nest::port basic_neuron::handles_test_event(
+inline nest::port mynest::basic_neuron::handles_test_event(
     nest::DataLoggingRequest& dlr, nest::port receptor_type){
   // You should usually not change the code in this function.
   // It confirms to the connection management system that we are able
@@ -428,6 +432,7 @@ inline void basic_neuron::set_status(const DictionaryDatum &__d){
 
 
 
-};
+}
+} // namespace
 
 #endif /* #ifndef BASIC_NEURON */

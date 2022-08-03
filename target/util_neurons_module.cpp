@@ -22,17 +22,36 @@
 *  2021-03-01 11:52:50.662528
 */
 
+#include "util_neurons_module.h"
+
+#include "config.h"
+
+// include headers with your own stuff
+
+//#include "diff_neuron.h"
+
+#include "basic_neuron.h"
+
+// #include "state_neuron.h"
+
+// #include "rb_neuron.h"
+
+// #include "tracking_neuron.h"
+
 // Includes from nestkernel:
 #include "connection_manager_impl.h"
 #include "connector_model_impl.h"
 #include "dynamicloader.h"
 #include "exceptions.h"
+#include "io_manager_impl.h"
 #include "genericmodel_impl.h"
 #include "kernel_manager.h"
 #include "model.h"
 #include "model_manager_impl.h"
 #include "nestmodule.h"
 #include "target_identifier.h"
+// #include "nest.h"
+// #include "nest_impl.h"
 
 // Includes from sli:
 #include "booldatum.h"
@@ -40,18 +59,7 @@
 #include "sliexceptions.h"
 #include "tokenarray.h"
 
-// include headers with your own stuff
-#include "util_neurons_module.h"
 
-#include "diff_neuron.h"
-
-#include "basic_neuron.h"
-
-#include "state_neuron.h"
-
-#include "rb_neuron.h"
-
-#include "tracking_neuron.h"
 
 // -- Interface to dynamic module loader ---------------------------------------
 
@@ -81,7 +89,7 @@ util_neurons_module util_neurons_module_LTX_mod;
 
 // -- DynModule functions ------------------------------------------------------
 
-util_neurons_module::util_neurons_module()
+mynest::util_neurons_module::util_neurons_module()
 {
 #ifdef LINKED_MODULE
   // register this module at the dynamic loader
@@ -91,36 +99,41 @@ util_neurons_module::util_neurons_module()
 #endif
 }
 
-util_neurons_module::~util_neurons_module()
-{
-}
+mynest::util_neurons_module::~util_neurons_module() = default;
 
 const std::string
-util_neurons_module::name(void) const
+mynest::util_neurons_module::name() const
 {
   return std::string("util_neurons_module"); // Return name of the module
 }
-
+/*
 const std::string
-util_neurons_module::commandstring( void ) const
+mynest::util_neurons_module::commandstring( void ) const
 {
   // Instruct the interpreter to load util_neurons_module-init.sli
   return std::string( "(util_neurons_module-init) run" );
 }
-
+*/
 //-------------------------------------------------------------------------------------
 void
-util_neurons_module::init( SLIInterpreter* i )
+mynest::util_neurons_module::init( SLIInterpreter* i )
 {
 
-    nest::kernel().model_manager.register_node_model<diff_neuron>("diff_neuron");
+    // nest::kernel().model_manager.register_node_model<diff_neuron>("diff_neuron");
 
     nest::kernel().model_manager.register_node_model<basic_neuron>("basic_neuron");
 
-    nest::kernel().model_manager.register_node_model<state_neuron>("state_neuron");
+    // nest::kernel().model_manager.register_node_model<state_neuron>("state_neuron");
 
-    nest::kernel().model_manager.register_node_model<rb_neuron>("rb_neuron");
+    // nest::kernel().model_manager.register_node_model<rb_neuron>("rb_neuron");
 
-    nest::kernel().model_manager.register_node_model<tracking_neuron>("tracking_neuron");
+    // nest::kernel().model_manager.register_node_model<tracking_neuron>("tracking_neuron");
+/*
+    #ifdef HAVE_SFML_AUDIO
+                    // Register recording backends.
+        nest::kernel().io_manager.register_recording_backend< nest::RecordingBackendSoundClick >( "soundclick" );
+    #endif
+    nest::kernel().io_manager.register_recording_backend< nest::RecordingBackendSocket >( "socket" );
 
+                */
 } // util_neurons_module::init()
