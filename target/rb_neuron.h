@@ -158,6 +158,7 @@ private:
     double desired;
     double buffer_size;
     double base_rate;
+    double sdev;
 
     /** Initialize parameters to their default values. */
     Parameters_();
@@ -278,7 +279,12 @@ private:
   inline void set_base_rate(const double __v) {
     P_.base_rate = __v;
   }
-
+  inline double get_sdev() const {
+    return P_.sdev;
+  }
+  inline void set_sdev(const double __v) {
+    P_.sdev = __v;
+  }
 
 
   inline nest::RingBuffer& get_inh_spikes() {return B_.get_inh_spikes();};
@@ -357,6 +363,8 @@ inline void rb_neuron::get_status(DictionaryDatum &__d) const{
 
   def<double>(__d, "base_rate", get_base_rate());
 
+  def<double>(__d, "sdev", get_sdev());
+
   def<double>(__d, "in_rate", get_in_rate());
 
   def<double>(__d, "out_rate", get_out_rate());
@@ -386,11 +394,11 @@ inline void rb_neuron::set_status(const DictionaryDatum &__d){
   double tmp_base_rate = get_base_rate();
   updateValue<double>(__d, "base_rate", tmp_base_rate);
 
+  double tmp_sdev = get_sdev();
+  updateValue<double>(__d, "sdev", tmp_sdev);
 
   double tmp_in_rate = get_in_rate();
   updateValue<double>(__d, "in_rate", tmp_in_rate);
-
-
 
   double tmp_out_rate = get_out_rate();
   updateValue<double>(__d, "out_rate", tmp_out_rate);
@@ -418,6 +426,8 @@ inline void rb_neuron::set_status(const DictionaryDatum &__d){
 
   set_base_rate(tmp_base_rate);
 
+
+  set_sdev(tmp_sdev);
 
 
   set_in_rate(tmp_in_rate);

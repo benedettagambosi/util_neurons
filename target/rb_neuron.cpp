@@ -97,6 +97,7 @@ rb_neuron::rb_neuron():Archiving_Node(), P_(), S_(), B_(*this)
   P_.desired = 0; // as boolean
   P_.buffer_size = 100*1.0; // as real
   P_.base_rate = 0; // as real
+  P_.sdev = 1; // as real
   S_.in_rate = 0; // as real
   S_.out_rate = 0; // as real
 }
@@ -107,6 +108,7 @@ rb_neuron::rb_neuron(const rb_neuron& __n):
   P_.desired = __n.P_.desired;
   P_.buffer_size = __n.P_.buffer_size;
   P_.base_rate = __n.P_.base_rate;
+  P_.sdev = __n.P_.sdev;
 
   S_.in_rate = __n.S_.in_rate;
   S_.out_rate = __n.S_.out_rate;
@@ -158,7 +160,7 @@ void rb_neuron::update(nest::Time const & origin,const long from, const long to)
   long buf_sz = std::lrint(P_.buffer_size / time_res);
   double spike_count_in = 0;
   double spike_count_out = 0;
-  double sdev = 5.0;
+  // double sdev = 20.0;
 
   for ( long i = 0; i < buf_sz; i++ ){
     if ( B_.in_spikes_.count(tick - i) ){
@@ -170,10 +172,10 @@ void rb_neuron::update(nest::Time const & origin,const long from, const long to)
   S_.in_rate = P_.kp * spike_count_in / P_.buffer_size;
   // Multiply by 1000 to translate rate in Hz (buffer size is in milliseconds)
 
-  //std::cout << "Desired: " << P_.desired << std::endl;
-  //std::cout << "In rate: " << S_.in_rate << std::endl;
+  // std::cout << "Desired: " << P_.desired << std::endl;
+  // std::cout << "In rate: " << S_.in_rate << std::endl;
 
-  S_.out_rate = P_.base_rate + 300.0 * exp(-pow(((P_.desired - S_.in_rate) / sdev), 2 ));
+  S_.out_rate = P_.base_rate + 300.0 * exp(-pow(((P_.desired - S_.in_rate) / P_.sdev), 2 ));
 
   //std::cout << "Out rate: " << S_.out_rate << std::endl;
 
